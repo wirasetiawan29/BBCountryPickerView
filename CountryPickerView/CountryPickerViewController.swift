@@ -8,7 +8,7 @@
 
 import UIKit
 
-public class CountryPickerViewController: UITableViewController {
+public class CountryPickerViewController: UIViewController {
 
     public var searchController: UISearchController?
     fileprivate var searchResults = [Country]()
@@ -30,12 +30,118 @@ public class CountryPickerViewController: UITableViewController {
     
     fileprivate var dataSource: CountryPickerViewDataSourceInternal!
     
+    let contentView = UIView()
+    let closeButton = UIButton()
+    let contentLabel = UILabel()
+    let swipeThreshold: CGFloat = 200
+    var viewTranslation = CGPoint(x: 0, y: 0)
+    let contactsTableView = UITableView()
+    let titleLabel = UILabel()
+    
     override public func viewDidLoad() {
         super.viewDidLoad()
         
+        self.modalPresentationStyle = .overCurrentContext
+        self.modalTransitionStyle = .coverVertical
+        
+        
+        let height: CGFloat = view.bounds.height/2
+        let xPosition: CGFloat = 0
+        let width: CGFloat = view.frame.width
+        let yPosition: CGFloat = view.frame.height - height
+        
+        contentView.frame = CGRect(
+            x: xPosition,
+            y: yPosition,
+            width: width,
+            height: height
+        )
+        
+        contentView.backgroundColor = .white
+        
+//        prepareNavItem()
+        
+        view.addSubview(contentView)
+        setupMyNewLabel(placeHolderValue: "Choose country code", labelName: "Choose country code")
+        setupTableView()
+        //Round the .topLeft and .topRight corners of the contentView
+        contentView.layer.roundCorners([.topLeft, .topRight], radius: 20)
+        contentView.layer.masksToBounds = true
+        
+        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handleDismiss(recognizer:)))
+        panGestureRecognizer.cancelsTouchesInView = false
+        contentView.addGestureRecognizer(panGestureRecognizer)
+        
+    }
+    
+    fileprivate func setupMyNewLabel(placeHolderValue text: String, labelName name: String) {
+        
+        let myNewLabel: UILabel = {
+            let lbl = UILabel()
+            lbl.frame = CGRect(x: 0, y: 0, width: contentView.bounds.width, height: 50) //setting frame here or you can change later as well
+            lbl.backgroundColor = .white
+            lbl.font = UIFont.boldSystemFont(ofSize: 20)
+            lbl.textColor = .darkGray
+            lbl.textAlignment = .center
+            lbl.translatesAutoresizingMaskIntoConstraints = false //make sure this property is false when programmatically setting constraints
+            return lbl
+        }()
+        
+        myNewLabel.layer.name = name
+        myNewLabel.text = text
+        contentView.addSubview(myNewLabel)
+
+        //setup your constraints here
+        myNewLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor).isActive = true
+        myNewLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor).isActive = true
+        myNewLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16).isActive = true
+//        myNewLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
+        
+        contactsTableView.dataSource = self
+        contactsTableView.delegate = self
+        contentView.addSubview(contactsTableView)
+        contactsTableView.translatesAutoresizingMaskIntoConstraints = false
+        contactsTableView.topAnchor.constraint(equalTo: myNewLabel.topAnchor, constant: 50).isActive = true
+        contactsTableView.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
+        contactsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
+        contactsTableView.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
+        contactsTableView.separatorStyle = .none
+        contactsTableView.backgroundView = UIView()
         prepareTableItems()
-        prepareNavItem()
         prepareSearchBar()
+    }
+    
+    private func setupTableView() {
+        
+      }
+    
+    // This will dismiss the VC using the 'close' button
+    @objc func closeAction (_ sender: UIButton) {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    // This will dismiss the VC using the UIPanGestureRecognizer if the yTranslation is bigger than the swipeThreshold value.
+    // If yTranslation is less than the swipeThreshold value, VC will bounce back to its original height
+    @objc
+    func handleDismiss (recognizer: UIPanGestureRecognizer) {
+        switch recognizer.state {
+        case .changed:
+            viewTranslation = recognizer.translation(in: view)
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 1, options: .curveEaseOut, animations: {
+                guard self.viewTranslation.y > 0 else {return}
+                self.view.transform = CGAffineTransform(translationX: 0, y: self.viewTranslation.y)
+            })
+        case .ended:
+            if viewTranslation.y < swipeThreshold {
+                UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 1, options: .curveEaseOut, animations: {
+                    self.view.transform = .identity
+                })
+            } else {
+                dismiss(animated: true, completion: nil)
+            }
+        default:
+            break
+        }
     }
    
 }
@@ -59,7 +165,7 @@ extension CountryPickerViewController {
             }
             
             countries = groupedData
-            sectionsTitles = groupedData.keys.sorted()
+            sectionsTitles = countries.keys.sorted()
         }
         
         // Add preferred section if data is available
@@ -68,8 +174,8 @@ extension CountryPickerViewController {
             countries[preferredTitle] = dataSource.preferredCountries
         }
         
-        tableView.sectionIndexBackgroundColor = .clear
-        tableView.sectionIndexTrackingBackgroundColor = .clear
+        contactsTableView.sectionIndexBackgroundColor = .clear
+        contactsTableView.sectionIndexTrackingBackgroundColor = .clear
     }
     
     func prepareNavItem() {
@@ -98,8 +204,7 @@ extension CountryPickerViewController {
         searchController?.delegate = self
 
         switch searchBarPosition {
-        case .tableViewHeader: tableView.tableHeaderView = searchController?.searchBar
-        case .navigationBar: navigationItem.titleView = searchController?.searchBar
+        case .tableViewHeader: contactsTableView.tableHeaderView = searchController?.searchBar
         default: break
         }
     }
@@ -110,17 +215,17 @@ extension CountryPickerViewController {
 }
 
 //MARK:- UITableViewDataSource
-extension CountryPickerViewController {
+extension CountryPickerViewController: UITableViewDataSource {
     
-    override public func numberOfSections(in tableView: UITableView) -> Int {
+    public func numberOfSections(in tableView: UITableView) -> Int {
         return isSearchMode ? 1 : sectionsTitles.count
     }
     
-    override public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return isSearchMode ? searchResults.count : countries[sectionsTitles[section]]!.count
     }
     
-    override public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let identifier = String(describing: CountryTableViewCell.self)
         
         let cell = tableView.dequeueReusableCell(withIdentifier: identifier) as? CountryTableViewCell
@@ -155,30 +260,12 @@ extension CountryPickerViewController {
         return cell
     }
     
-    override public func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return isSearchMode ? nil : sectionsTitles[section]
-    }
-    
-    override public func sectionIndexTitles(for tableView: UITableView) -> [String]? {
-        if isSearchMode {
-            return nil
-        } else {
-            if hasPreferredSection {
-                return Array<String>(sectionsTitles.dropFirst())
-            }
-            return sectionsTitles
-        }
-    }
-    
-    override public func tableView(_ tableView: UITableView, sectionForSectionIndexTitle title: String, at index: Int) -> Int {
-        return sectionsTitles.firstIndex(of: title)!
-    }
 }
 
 //MARK:- UITableViewDelegate
-extension CountryPickerViewController {
+extension CountryPickerViewController: UITableViewDelegate {
 
-    override public func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+    public func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
         if let header = view as? UITableViewHeaderFooterView {
             header.textLabel?.font = dataSource.sectionTitleLabelFont
             if let color = dataSource.sectionTitleLabelColor {
@@ -187,7 +274,7 @@ extension CountryPickerViewController {
         }
     }
     
-    override public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let country = isSearchMode ? searchResults[indexPath.row]
             : countries[sectionsTitles[indexPath.section]]![indexPath.row]
@@ -205,6 +292,7 @@ extension CountryPickerViewController {
             navigationController?.popViewController(animated: true, completion: completion)
         }
     }
+    
 }
 
 // MARK:- UISearchResultsUpdating
@@ -231,7 +319,7 @@ extension CountryPickerViewController: UISearchResultsUpdating {
                 return name.hasPrefix(query) || (dataSource.showCountryCodeInList && code.hasPrefix(query))
             }))
         }
-        tableView.reloadData()
+        contactsTableView.reloadData()
     }
 }
 
@@ -337,7 +425,8 @@ class CountryPickerViewDataSourceInternal: CountryPickerViewDataSource {
     }
     
     var showPhoneCodeInList: Bool {
-        return view.dataSource?.showPhoneCodeInList(in: view) ?? showPhoneCodeInList(in: view)
+        return true
+//        return view.dataSource?.showPhoneCodeInList(in: view) ?? showPhoneCodeInList(in: view)
     }
     
     var showCountryCodeInList: Bool {
@@ -354,5 +443,15 @@ class CountryPickerViewDataSourceInternal: CountryPickerViewDataSource {
     
     var excludedCountries: [Country] {
         return view.dataSource?.excludedCountries(in: view) ?? excludedCountries(in: view)
+    }
+}
+
+extension CALayer {
+    func roundCorners(_ corners: UIRectCorner, radius: CGFloat) {
+        let roundingSize = CGSize(width: radius, height: radius)
+        let path = UIBezierPath(roundedRect: self.bounds, byRoundingCorners: corners, cornerRadii: roundingSize)
+        let mask = CAShapeLayer()
+        mask.path = path.cgPath
+        self.mask = mask
     }
 }

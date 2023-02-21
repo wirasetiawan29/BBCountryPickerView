@@ -154,16 +154,20 @@ public class CountryPickerView: NibView {
     }
     
     public func showCountriesList(from viewController: UIViewController) {
-        let countryVc = CountryPickerViewController(style: .grouped)
+        let countryVc = CountryPickerViewController()
         countryVc.countryPickerView = self
         if let viewController = viewController as? UINavigationController {
             delegate?.countryPickerView(self, willShow: countryVc)
-            viewController.pushViewController(countryVc, animated: true) {
+            viewController.modalPresentationStyle = .overCurrentContext
+            viewController.modalTransitionStyle = .coverVertical
+            viewController.present(countryVc, animated: true) {
                 self.delegate?.countryPickerView(self, didShow: countryVc)
             }
         } else {
             let navigationVC = UINavigationController(rootViewController: countryVc)
             delegate?.countryPickerView(self, willShow: countryVc)
+            viewController.modalPresentationStyle = .overCurrentContext
+            viewController.modalTransitionStyle = .coverVertical
             viewController.present(navigationVC, animated: true) {
                 self.delegate?.countryPickerView(self, didShow: countryVc)
             }

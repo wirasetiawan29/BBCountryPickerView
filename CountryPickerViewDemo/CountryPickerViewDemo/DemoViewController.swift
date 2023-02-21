@@ -139,7 +139,7 @@ extension DemoViewController: CountryPickerViewDataSource {
     }
     
     func navigationTitle(in countryPickerView: CountryPickerView) -> String? {
-        return "Select a Country"
+        return "Choose country code"
     }
         
     func searchBarPosition(in countryPickerView: CountryPickerView) -> SearchBarPosition {
