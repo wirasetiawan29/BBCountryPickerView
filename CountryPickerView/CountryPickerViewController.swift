@@ -326,7 +326,7 @@ extension CountryPickerViewController: UISearchControllerDelegate {
     }
     
     public func willDismissSearchController(_ searchController: UISearchController) {
-        self.navigationController?.navigationBar.isTranslucent = false
+        self.navigationController?.navigationBar.isTranslucent = true
     }
 }
 
