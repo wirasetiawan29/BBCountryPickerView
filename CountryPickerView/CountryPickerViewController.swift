@@ -40,7 +40,7 @@ public class CountryPickerViewController: UIViewController {
     
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-//        navigationController?.isNavigationBarHidden = true
+        navigationController?.isNavigationBarHidden = true
     }
     
     override public func viewDidLoad() {
@@ -50,7 +50,7 @@ public class CountryPickerViewController: UIViewController {
         self.modalTransitionStyle = .coverVertical
         
         
-        let height: CGFloat = view.bounds.height/2
+        let height: CGFloat = view.bounds.height/1.5
         let xPosition: CGFloat = 0
         let width: CGFloat = view.frame.width
         let yPosition: CGFloat = view.frame.height - height
@@ -68,7 +68,6 @@ public class CountryPickerViewController: UIViewController {
         
         view.addSubview(contentView)
         setupMyNewLabel(placeHolderValue: "Choose country code", labelName: "Choose country code")
-        setupTableView()
         //Round the .topLeft and .topRight corners of the contentView
         contentView.layer.roundCorners([.topLeft, .topRight], radius: 20)
         contentView.layer.masksToBounds = true
@@ -100,7 +99,6 @@ public class CountryPickerViewController: UIViewController {
         myNewLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor).isActive = true
         myNewLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor).isActive = true
         myNewLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16).isActive = true
-//        myNewLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
         
         contactsTableView.dataSource = self
         contactsTableView.delegate = self
@@ -115,10 +113,6 @@ public class CountryPickerViewController: UIViewController {
         prepareTableItems()
         prepareSearchBar()
     }
-    
-    private func setupTableView() {
-        
-      }
     
     // This will dismiss the VC using the 'close' button
     @objc func closeAction (_ sender: UIButton) {
@@ -183,18 +177,6 @@ extension CountryPickerViewController {
         contactsTableView.sectionIndexTrackingBackgroundColor = .clear
     }
     
-    func prepareNavItem() {
-        navigationItem.title = dataSource.navigationTitle
-
-        // Add a close button if this is the root view controller
-        if navigationController?.viewControllers.count == 1 {
-            let closeButton = dataSource.closeButtonNavigationItem
-            closeButton.target = self
-            closeButton.action = #selector(close)
-            navigationItem.leftBarButtonItem = closeButton
-        }
-    }
-    
     func prepareSearchBar() {
         let searchBarPosition = dataSource.searchBarPosition
         if searchBarPosition == .hidden  {
@@ -203,9 +185,11 @@ extension CountryPickerViewController {
         searchController = UISearchController(searchResultsController:  nil)
         searchController?.searchResultsUpdater = self
         searchController?.dimsBackgroundDuringPresentation = false
-        searchController?.hidesNavigationBarDuringPresentation = searchBarPosition == .tableViewHeader
+        searchController?.hidesNavigationBarDuringPresentation = true
         searchController?.definesPresentationContext = true
         searchController?.searchBar.delegate = self
+        searchController?.searchBar.searchBarStyle = .minimal
+        searchController?.searchBar.placeholder = "Type a country ..."
         searchController?.delegate = self
 
         switch searchBarPosition {
@@ -214,9 +198,6 @@ extension CountryPickerViewController {
         }
     }
     
-    @objc private func close() {
-        self.navigationController?.dismiss(animated: true, completion: nil)
-    }
 }
 
 //MARK:- UITableViewDataSource
@@ -290,12 +271,7 @@ extension CountryPickerViewController: UITableViewDelegate {
         let completion = {
             self.countryPickerView.selectedCountry = country
         }
-        // If this is root, dismiss, else pop
-        if navigationController?.viewControllers.count == 1 {
-            navigationController?.dismiss(animated: true, completion: completion)
-        } else {
-            navigationController?.popViewController(animated: true, completion: completion)
-        }
+        navigationController?.dismiss(animated: true, completion: completion)
     }
     
 }
@@ -338,7 +314,6 @@ extension CountryPickerViewController: UISearchBarDelegate {
     
     public func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         // Show the back/left navigationItem button
-        prepareNavItem()
         navigationItem.hidesBackButton = false
     }
 }
@@ -416,13 +391,6 @@ class CountryPickerViewDataSourceInternal: CountryPickerViewDataSource {
     
     var navigationTitle: String? {
         return view.dataSource?.navigationTitle(in: view)
-    }
-    
-    var closeButtonNavigationItem: UIBarButtonItem {
-        guard let button = view.dataSource?.closeButtonNavigationItem(in: view) else {
-            return UIBarButtonItem(title: "Close", style: .done, target: nil, action: nil)
-        }
-        return button
     }
     
     var searchBarPosition: SearchBarPosition {
