@@ -37,7 +37,6 @@ public func !=(lhs: Country, rhs: Country) -> Bool {
 
 
 public class CountryPickerView: NibView {
-    @IBOutlet weak var spacingConstraint: NSLayoutConstraint!
     @IBOutlet public weak var flagImageView: UIImageView! {
         didSet {
             flagImageView.clipsToBounds = true
@@ -46,9 +45,10 @@ public class CountryPickerView: NibView {
         }
     }
     @IBOutlet public weak var countryDetailsLabel: UILabel!
+    @IBOutlet public weak var arrowImageView: UIImageView!
     
     /// Show/Hide the country code on the view.
-    public var showCountryCodeInView = true {
+    public var showCountryCodeInView = false {
         didSet {
             if showCountryNameInView && showCountryCodeInView {
                 showCountryNameInView = false
@@ -81,16 +81,6 @@ public class CountryPickerView: NibView {
     /// Change the text color of phone code
     public var textColor = UIColor.black {
         didSet { setup() }
-    }
-    
-    /// The spacing between the flag image and the text.
-    public var flagSpacingInView: CGFloat {
-        get {
-            return spacingConstraint.constant
-        }
-        set {
-            spacingConstraint.constant = newValue
-        }
     }
     
     weak public var dataSource: CountryPickerViewDataSource?
@@ -136,6 +126,7 @@ public class CountryPickerView: NibView {
         } else {
             countryDetailsLabel.text = nil
         }
+        
     }
     
     @IBAction func openCountryPickerController(_ sender: Any) {
