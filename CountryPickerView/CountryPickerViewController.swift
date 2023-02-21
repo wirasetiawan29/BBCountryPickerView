@@ -38,8 +38,8 @@ public class CountryPickerViewController: UIViewController {
     let contactsTableView = UITableView()
     let titleLabel = UILabel()
     
-    public override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         navigationController?.isNavigationBarHidden = true
     }
     
